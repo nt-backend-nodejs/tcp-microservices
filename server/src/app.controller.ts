@@ -1,13 +1,16 @@
-import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
-
+import { Controller, Inject } from '@nestjs/common';
+import { ClientProxy, MessagePattern } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 @Controller()
 export class AppController {
-  constructor() {}
+  constructor(@Inject('TCP_SERVICE') private readonly client: ClientProxy) {}
 
   @MessagePattern({ cmd: 'sum' })
-  sum(data: number[]): number {
-    console.log('Kelib tushgan massiv:', data);
-    return data.reduce((acc, val) => acc + val, 0);
+  async sum(data: number[]): Promise<number> {
+    console.log('Server  1', data);
+    const result = (await firstValueFrom(
+      this.client.send<number>({ cmd: 'sum' }, data),
+    )) as number;
+    return result;
   }
 }
